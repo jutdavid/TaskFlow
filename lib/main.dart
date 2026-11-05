@@ -34,85 +34,91 @@ class TaskFlowApp extends StatelessWidget {
   }
 }
 
-class WelcomeScreen extends StatelessWidget {
+class WelcomeScreen extends StatefulWidget {
   const WelcomeScreen({super.key});
 
-  // Datos estáticos
-  static const String appName = 'TaskFlow';
-  static const String courseName = 'Desarrollo móvil con Flutter';
-  static const String studentName = 'JUAN DAVID MENDOZA VELEZ';
-  static const int pendingTasks = 5;
+  @override
+  State<WelcomeScreen> createState() => _WelcomeScreenState();
+}
+
+class _WelcomeScreenState extends State<WelcomeScreen> {
+  final String studentName = 'JUAN DAVID MENDOZA VELEZ';
+  static const dailyGoal = 5;
+
+  int pendingTasks = 3;
+  int completedTasks = 0;
+
+  void _addTask() {
+    setState(() {
+      pendingTasks++;
+    });
+  }
+
+  void _completeTask() {
+    if (pendingTasks == 0) {
+      return;
+    }
+
+    setState(() {
+      pendingTasks--;
+      if (completedTasks < dailyGoal) {
+        completedTasks++;
+      }
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
+    final statusMessage = pendingTasks == 0
+        ? '¡Excelente! No tienes tareas pendientes.'
+        : 'Aún tienes tareas por organizar.';
+
     return Scaffold(
-      body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const SizedBox(height: 32),
-              const Icon(
-                Icons.check_circle_outline,
-                size: 64,
-                color: AppColors.secondary,
-              ),
-              const SizedBox(height: 16),
-              const Text(
-                appName,
-                style: TextStyle(
-                  fontSize: 40,
-                  fontWeight: FontWeight.bold,
-                  color: AppColors.textLight,
-                ),
-              ),
-              const SizedBox(height: 8),
-              const Text(
-                courseName,
-                style: TextStyle(fontSize: 16, color: AppColors.secondary),
-              ),
-              const SizedBox(height: 32),
-              const Text(
-                '¡Bienvenido, $studentName!',
-                style: TextStyle(fontSize: 22, color: AppColors.textLight),
-              ),
-              const SizedBox(height: 8),
-              const Text(
-                'Organiza tus tareas y mantén el control de tu día.',
-                style: TextStyle(fontSize: 15, color: Colors.white70),
-              ),
-              const SizedBox(height: 32),
-              Container(
-                width: double.infinity,
+      appBar: AppBar(title: const Text('TaskFlow'), centerTitle: true),
+      body: Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              '¡Hola, $studentName!',
+              style: Theme.of(context).textTheme.headlineMedium,
+            ),
+            const SizedBox(height: 12),
+            Text(statusMessage),
+            const SizedBox(height: 8),
+            Text('Completadas hoy: $completedTasks de $dailyGoal'),
+            const SizedBox(height: 28),
+            Card(
+              child: Padding(
                 padding: const EdgeInsets.all(20),
-                decoration: BoxDecoration(
-                  color: AppColors.card,
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: AppColors.primary, width: 1.5),
-                ),
-                child: const Column(
+                child: Row(
                   children: [
-                    Text(
-                      '$pendingTasks',
-                      style: TextStyle(
-                        fontSize: 56,
-                        fontWeight: FontWeight.bold,
-                        color: AppColors.primary,
-                      ),
-                    ),
-                    Text(
-                      'tareas pendientes',
-                      style: TextStyle(
-                        fontSize: 16,
-                        color: AppColors.textLight,
-                      ),
-                    ),
+                    const Icon(Icons.pending_actions),
+                    const SizedBox(width: 12),
+                    Text('Tareas pendientes: $pendingTasks'),
                   ],
                 ),
               ),
-            ],
-          ),
+            ),
+            const SizedBox(height: 24),
+            Wrap(
+              spacing: 12,
+              runSpacing: 12,
+              children: [
+                ElevatedButton.icon(
+                  onPressed: _addTask,
+                  icon: const Icon(Icons.add),
+                  label: const Text('Agregar tarea'),
+                ),
+                OutlinedButton.icon(
+                  onPressed: pendingTasks == 0 ? null : _completeTask,
+                  icon: const Icon(Icons.done),
+                  label: const Text('Completar una tarea'),
+                ),
+              ],
+            ),
+          ],
         ),
       ),
     );
