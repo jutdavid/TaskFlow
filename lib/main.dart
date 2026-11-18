@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
+import 'task.dart';
+
 void main() {
   runApp(const TaskFlowApp());
 }
@@ -14,25 +16,8 @@ class AppColors {
   static const Color textLight = Color(0xFFEDEFFF);
 }
 
-// Modelo de datos: solo representa una tarea, no dibuja nada.
-class Task {
-  const Task({
-    required this.id,
-    required this.title,
-    required this.description,
-    required this.priority,
-    required this.isCompleted,
-  });
-
-  final int id;
-  final String title;
-  final String description;
-  final String priority;
-  final bool isCompleted;
-}
-
-// Backlog local con tareas reales del proyecto.
-const demoTasks = [
+// Cinco tareas propias, con ids únicos y usuario de prueba.
+const demoTasks = <Task>[
   Task(
     id: 1,
     title: 'Configurar entorno Flutter',
@@ -41,6 +26,7 @@ const demoTasks = [
         'dispositivo para ejecutar la aplicación.',
     priority: 'Alta',
     isCompleted: true,
+    userId: 1,
   ),
   Task(
     id: 2,
@@ -50,24 +36,27 @@ const demoTasks = [
         'contador de tareas y una paleta de color propia.',
     priority: 'Alta',
     isCompleted: true,
+    userId: 1,
   ),
   Task(
     id: 3,
-    title: 'Implementar estado con setState',
+    title: 'Implementar navegación',
     description:
-        'Agregar y completar tareas pendientes usando StatefulWidget '
-        'y un objetivo diario de tareas completadas.',
+        'Configurar go_router para abrir el detalle de una tarea '
+        'usando su id en la ruta.',
     priority: 'Media',
     isCompleted: true,
+    userId: 1,
   ),
   Task(
     id: 4,
-    title: 'Construir listado de tareas',
+    title: 'Definir el modelo de datos',
     description:
-        'Modelar la clase Task y mostrar las tareas con TaskCard '
-        'dentro de un ListView.builder.',
+        'Crear la clase Task con id, título, descripción, prioridad, '
+        'estado y usuario, y documentar el alcance en el README.',
     priority: 'Alta',
-    isCompleted: true,
+    isCompleted: false,
+    userId: 1,
   ),
   Task(
     id: 5,
@@ -77,18 +66,26 @@ const demoTasks = [
         'carga, vacío y error en la interfaz.',
     priority: 'Media',
     isCompleted: false,
+    userId: 1,
   ),
 ];
 
-// Rutas declarativas: '/' es el listado y '/task/:id' el detalle.
+// Devuelve la tarea con ese id, o null si no existe.
+Task? findTask(int? id) {
+  for (final task in demoTasks) {
+    if (task.id == id) return task;
+  }
+  return null;
+}
+
 final appRouter = GoRouter(
   routes: [
     GoRoute(path: '/', builder: (context, state) => const TaskListScreen()),
     GoRoute(
       path: '/task/:id',
       builder: (context, state) {
-        final taskId = int.parse(state.pathParameters['id']!);
-        return TaskDetailScreen(taskId: taskId);
+        final id = int.tryParse(state.pathParameters['id'] ?? '');
+        return TaskDetailScreen(task: findTask(id));
       },
     ),
   ],
@@ -115,35 +112,6 @@ class TaskFlowApp extends StatelessWidget {
   }
 }
 
-// Representa visualmente UNA tarea. La pantalla decide qué pasa al tocarla.
-class TaskCard extends StatelessWidget {
-  const TaskCard({super.key, required this.task, this.onTap});
-
-  final Task task;
-  final VoidCallback? onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return Card(
-      child: ListTile(
-        onTap: onTap,
-        leading: Icon(
-          task.isCompleted ? Icons.check_circle : Icons.radio_button_unchecked,
-          color: task.isCompleted ? Colors.green : null,
-        ),
-        title: Text(task.title),
-        subtitle: Text(
-          '${task.priority} · ${task.description}',
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
-        ),
-        trailing: const Icon(Icons.chevron_right),
-      ),
-    );
-  }
-}
-
-// Listado: cada tarjeta navega al detalle enviando el id en la ruta.
 class TaskListScreen extends StatelessWidget {
   const TaskListScreen({super.key});
 
@@ -156,9 +124,19 @@ class TaskListScreen extends StatelessWidget {
         itemCount: demoTasks.length,
         itemBuilder: (context, index) {
           final task = demoTasks[index];
-          return TaskCard(
-            task: task,
-            onTap: () => context.push('/task/${task.id}'),
+          return Card(
+            child: ListTile(
+              leading: Icon(
+                task.isCompleted
+                    ? Icons.check_circle
+                    : Icons.radio_button_unchecked,
+                color: task.isCompleted ? Colors.green : null,
+              ),
+              title: Text(task.title),
+              subtitle: Text('Prioridad: ${task.priority}'),
+              trailing: const Icon(Icons.chevron_right),
+              onTap: () => context.push('/task/${task.id}'),
+            ),
           );
         },
       ),
@@ -166,11 +144,10 @@ class TaskListScreen extends StatelessWidget {
   }
 }
 
-// Detalle: recibe un id, busca la tarea y muestra toda su información.
 class TaskDetailScreen extends StatelessWidget {
-  const TaskDetailScreen({super.key, required this.taskId});
+  const TaskDetailScreen({super.key, required this.task});
 
-  final int taskId;
+  final Task? task;
 
   Color _priorityColor(String priority) {
     switch (priority) {
@@ -185,63 +162,53 @@ class TaskDetailScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final task = demoTasks.firstWhere((item) => item.id == taskId);
-
+    final selected = task;
     return Scaffold(
       appBar: AppBar(title: const Text('Detalle de tarea')),
       body: Padding(
         padding: const EdgeInsets.all(24),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(task.title, style: Theme.of(context).textTheme.headlineSmall),
-            const SizedBox(height: 16),
-            Text(task.description),
-            const SizedBox(height: 16),
-            Chip(
-              avatar: Icon(Icons.flag, color: _priorityColor(task.priority)),
-              label: Text('Prioridad: ${task.priority}'),
-            ),
-            const SizedBox(height: 12),
-            Row(
-              children: [
-                Icon(
-                  task.isCompleted ? Icons.check_circle : Icons.pending_actions,
-                  color: task.isCompleted ? Colors.green : Colors.amber,
-                ),
-                const SizedBox(width: 8),
-                Text(
-                  task.isCompleted ? 'Estado: completada' : 'Estado: pendiente',
-                ),
-              ],
-            ),
-            const SizedBox(height: 24),
-            // Acción contextual según el estado de la tarea.
-            if (task.isCompleted)
-              const Text(
-                '¡Buen trabajo! Esta tarea ya está terminada.',
-                style: TextStyle(color: AppColors.secondary),
-              )
-            else
-              FilledButton.icon(
-                onPressed: () {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text('Tarea "${task.title}" lista para iniciar'),
+        child: selected == null
+            ? const Text('No se encontró esta tarea.')
+            : Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    selected.title,
+                    style: Theme.of(context).textTheme.headlineSmall,
+                  ),
+                  const SizedBox(height: 16),
+                  Text(selected.description),
+                  const SizedBox(height: 16),
+                  Chip(
+                    avatar: Icon(
+                      Icons.flag,
+                      color: _priorityColor(selected.priority),
                     ),
-                  );
-                },
-                icon: const Icon(Icons.play_arrow),
-                label: const Text('Empezar esta tarea'),
+                    label: Text('Prioridad: ${selected.priority}'),
+                  ),
+                  const SizedBox(height: 12),
+                  Row(
+                    children: [
+                      Icon(
+                        selected.isCompleted
+                            ? Icons.check_circle
+                            : Icons.pending_actions,
+                        color: selected.isCompleted
+                            ? Colors.green
+                            : Colors.amber,
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        selected.isCompleted
+                            ? 'Estado: completada'
+                            : 'Estado: pendiente',
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+                  Text('Usuario: ${selected.userId}'),
+                ],
               ),
-            const Spacer(),
-            FilledButton.tonalIcon(
-              onPressed: () => context.pop(),
-              icon: const Icon(Icons.arrow_back),
-              label: const Text('Volver al listado'),
-            ),
-          ],
-        ),
       ),
     );
   }
