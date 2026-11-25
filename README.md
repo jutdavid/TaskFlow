@@ -56,3 +56,21 @@ TaskFlow lee sus tareas de JSONPlaceholder, una API pública de práctica.
 - Valores que TaskFlow completa por defecto: `description` ("Sin descripción (API)") y `priority` ("Sin prioridad (API)"), porque la API no los entrega.
 - Marcar una tarea como completada es un cambio local: se guarda solo en memoria y se pierde al reiniciar la app, porque JSONPlaceholder no guarda cambios.
 - Arquitectura: `TaskApiService` (HTTP con Dio) -> `RemoteTaskRepository` -> `TasksViewModel` -> pantallas.
+
+
+## Estados de la lista de tareas
+
+La pantalla de tareas distingue cuatro situaciones:
+
+- Carga: se muestra un indicador de progreso mientras la petición está pendiente.
+- Éxito: se muestra una tarjeta por cada tarea recibida de la API.
+- Vacío: la API responde correctamente pero sin tareas. Se muestra un mensaje y el botón Actualizar.
+- Error: la petición falla y se muestra un mensaje con el botón Reintentar.
+
+Cómo provoqué cada estado:
+
+- Éxito: con internet, `userId = 2` devuelve tareas.
+- Vacío: cambié temporalmente `TaskApiService.userId` a 9999, un usuario que no existe, y la API devolvió una lista vacía. Luego restauré el valor 2.
+- Error: apagué el WiFi y los datos del celular y pulsé actualizar. Al reactivar internet, el botón Reintentar recuperó la lista sin reiniciar la app.
+
+Una lista vacía es una respuesta válida; un error significa que no se sabe qué tareas hay.
