@@ -74,3 +74,15 @@ Cómo provoqué cada estado:
 - Error: apagué el WiFi y los datos del celular y pulsé actualizar. Al reactivar internet, el botón Reintentar recuperó la lista sin reiniciar la app.
 
 Una lista vacía es una respuesta válida; un error significa que no se sabe qué tareas hay.
+
+
+## Formulario de tareas
+
+La pantalla "Nueva tarea" (ruta `/new`) permite preparar una tarea con título, descripción, prioridad y una fecha límite opcional.
+
+- Título: obligatorio, mínimo 3 caracteres.
+- Descripción: opcional, máximo 200 caracteres.
+- Prioridad: Alta, Media o Baja (por defecto Media).
+- Fecha límite: opcional, elegida con `showDatePicker`; no es necesaria para guardar.
+
+Guardar devuelve un borrador (`TaskDraft`) a la lista y muestra un mensaje de confirmación. Todavía no envía datos a la API; la creación con POST se implementará en la sesión 10.

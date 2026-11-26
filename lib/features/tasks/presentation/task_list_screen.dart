@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
+import 'task_form_screen.dart';
 import 'tasks_view_model.dart';
 
 class TaskListScreen extends StatelessWidget {
@@ -25,6 +26,25 @@ class TaskListScreen extends StatelessWidget {
         ],
       ),
       body: _buildBody(context, viewModel),
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: () async {
+          final draft = await context.push<TaskDraft>('/new');
+          if (!context.mounted || draft == null) return;
+          final dateText = draft.dueDate == null
+              ? ''
+              : ' · vence ${formatDate(draft.dueDate!)}';
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                'Formulario válido: ${draft.title} '
+                '(${draft.priority})$dateText',
+              ),
+            ),
+          );
+        },
+        icon: const Icon(Icons.add),
+        label: const Text('Nueva tarea'),
+      ),
     );
   }
 
@@ -71,7 +91,7 @@ class TaskListScreen extends StatelessWidget {
       onRefresh: () => context.read<TasksViewModel>().loadTasks(),
       child: ListView.builder(
         physics: const AlwaysScrollableScrollPhysics(),
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.fromLTRB(16, 16, 16, 88),
         itemCount: viewModel.tasks.length,
         itemBuilder: (context, index) {
           final task = viewModel.tasks[index];
