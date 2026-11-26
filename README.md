@@ -86,3 +86,18 @@ La pantalla "Nueva tarea" (ruta `/new`) permite preparar una tarea con título, 
 - Fecha límite: opcional, elegida con `showDatePicker`; no es necesaria para guardar.
 
 Guardar devuelve un borrador (`TaskDraft`) a la lista y muestra un mensaje de confirmación. Todavía no envía datos a la API; la creación con POST se implementará en la sesión 10.
+
+
+## CRUD de tareas
+
+TaskFlow permite crear, editar y eliminar tareas, y actualiza la lista tras cada respuesta de la API.
+
+- Crear: `POST /todos` con `title`, `completed` y `userId`.
+- Editar el título: `PATCH /todos/:id` con `title` y `completed`.
+- Eliminar: `DELETE /todos/:id`, con un diálogo de confirmación previo.
+
+Importante: JSONPlaceholder simula las escrituras. Responde con éxito (HTTP 200 o 201) pero no guarda los cambios, por lo que al recargar la lista las tareas vuelven a su estado original. La API siempre devuelve el id 201 al crear, así que el repositorio asigna un id propio cuando ese ya existe. Las tareas creadas en la app no existen en el servidor, por lo que no se les envía PATCH.
+
+La descripción y la prioridad no forman parte de la API de práctica: se conservan solo de forma local.
+
+La app solo muestra un mensaje de éxito después de recibir la respuesta; si la petición falla, muestra un mensaje de error.
